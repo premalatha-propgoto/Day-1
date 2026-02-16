@@ -23,6 +23,14 @@ img {
   margin-top: 10px;
   padding-top: 10px;
 }
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: white;
+  padding: 10px;
+}
 </style>
 </head>
 
@@ -31,12 +39,16 @@ img {
 <h2>Product Details</h2>
 
 <!-- Search & Filter -->
-<input id="searchInput"
-placeholder="Search title, price or category">
+<div class="header">
+  <h2>Products</h2>
 
-<select id="categorySelect">
-<option value="all">All Categories</option>
-</select>
+  <input id="searchInput"
+         placeholder="Search title, price or category">
+
+  <select id="categorySelect">
+    <option value="all">All Categories</option>
+  </select>
+</div>
 
 <div id="productDetails">Loading...</div>
 

@@ -22,29 +22,42 @@
       cursor: pointer;
     }
 
-    .product-box img {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
-    }
+.product-box img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: white;
+  padding: 10px;
+}
 
-    input,
-    select {
-      padding: 8px;
-      margin: 10px 5px 20px 0;
-    }
-  </style>
+input, select {
+  padding: 8px;
+  margin: 10px 5px 20px 0;
+
+}
+</style>
 </head>
 
 <body>
 
-  <h2>Product</h2>
+<h2>Products</h2>
 
-  <input id="searchInput" placeholder="Search title, price or category">
+<div class="header">
+  <h2>Products</h2>
+
+  <input id="searchInput"
+         placeholder="Search title, price or category">
 
   <select id="categorySelect">
     <option value="all">All Categories</option>
   </select>
+</div>
 
   <div id="products"></div>
 
