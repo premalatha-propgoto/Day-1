@@ -1,121 +1,126 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<title>Products</title>
-<style>
-body { font-family: Arial; padding: 20px; }
+  <title>Products</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+    }
 
-#products {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-}
+    #products {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
 
-.product-box {
-  width: 220px;
-  border: 1px solid #ccc;
-  padding: 10px;
-  cursor: pointer;
-}
+    .product-box {
+      width: 220px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      cursor: pointer;
+    }
 
-.product-box img {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-}
+    .product-box img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+    }
 
-input, select {
-  padding: 8px;
-  margin: 10px 5px 20px 0;
-}
-</style>
+    input,
+    select {
+      padding: 8px;
+      margin: 10px 5px 20px 0;
+    }
+  </style>
 </head>
 
 <body>
 
-<h2>Products</h2>
+  <h2>Product</h2>
 
-<input id="searchInput"
-placeholder="Search title, price or category">
+  <input id="searchInput" placeholder="Search title, price or category">
 
-<select id="categorySelect">
-<option value="all">All Categories</option>
-</select>
+  <select id="categorySelect">
+    <option value="all">All Categories</option>
+  </select>
 
-<div id="products"></div>
+  <div id="products"></div>
 
-<script>
-let allProducts = [];
+  <script>
+    let allProducts = [];
 
-fetch("https://dummyjson.com/products?limit=100")
-.then(res => res.json())
-.then(data => {
-  allProducts = data.products;
-  populateCategories();
-  displayProducts();
-});
+    fetch("https://dummyjson.com/products?limit=100")
+      .then(res => res.json())
+      .then(data => {
+        allProducts = data.products;
+        populateCategories();
+        displayProducts();
+      });
 
-function populateCategories() {
-  const select = document.getElementById("categorySelect");
+    function populateCategories() {
+      const select = document.getElementById("categorySelect");
 
-  const categories =
-    [...new Set(allProducts.map(p => p.category))];
+      const categories =
+        [...new Set(allProducts.map(p => p.category))];
 
-  categories.forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat;
-    option.textContent = cat;
-    select.appendChild(option);
-  });
-}
+      categories.forEach(cat => {
+        const option = document.createElement("option");
+        option.value = cat;
+        option.textContent = cat;
+        select.appendChild(option);
+      });
+    }
 
-function displayProducts() {
-  const container = document.getElementById("products");
-  container.innerHTML = "";
+    function displayProducts() {
+      const container = document.getElementById("products");
+      container.innerHTML = "";
 
-  const search =
-    document.getElementById("searchInput")
-      .value.toLowerCase();
+      const search =
+        document.getElementById("searchInput")
+          .value.toLowerCase();
 
-  const selectedCategory =
-    document.getElementById("categorySelect").value;
+      const selectedCategory =
+        document.getElementById("categorySelect").value;
 
-  const filtered = allProducts.filter(p => {
-    const catMatch =
-      selectedCategory === "all" ||
-      p.category === selectedCategory;
+      const filtered = allProducts.filter(p => {
+        const catMatch =
+          selectedCategory === "all" ||
+          p.category === selectedCategory;
 
-    const searchMatch =
-      p.title.toLowerCase().includes(search) ||
-      p.category.toLowerCase().includes(search) ||
-      p.price.toString().includes(search);
+        const searchMatch =
+          p.title.toLowerCase().includes(search) ||
+          p.category.toLowerCase().includes(search) ||
+          p.price.toString().includes(search);
 
-    return catMatch && searchMatch;
-  });
+        return catMatch && searchMatch;
+      });
 
-  filtered.forEach(product => {
-    const box = document.createElement("div");
-    box.className = "product-box";
+      filtered.forEach(product => {
+        const box = document.createElement("div");
+        box.className = "product-box";
 
-    box.innerHTML = `
+        box.innerHTML = `
       <img src="${product.thumbnail}">
       <h4>${product.title}</h4>
       <p>${product.category}</p>
       <p>$${product.price}</p>
     `;
 
-    box.onclick = () => {
-      window.location.href =
-        "product.html?id=" + product.id;
-    };
+        box.onclick = () => {
+          window.location.href =
+            "product.html?id=" + product.id;
+        };
 
-    container.appendChild(box);
-  });
-}
+        container.appendChild(box);
+      });
+    }
 
-searchInput.addEventListener("input", displayProducts);
-categorySelect.addEventListener("change", displayProducts);
-</script>
+    searchInput.addEventListener("input", displayProducts);
+    categorySelect.addEventListener("change", displayProducts);
+  </script>
 
 </body>
+
 </html>
