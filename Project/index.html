@@ -1,32 +1,30 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-  <title>Products</title>
-  <style>
-    body {
-      font-family: Arial;
-      padding: 20px;
-    }
+<title>Products</title>
 
-    #products {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
+<style>
+body { font-family: Arial; padding: 20px; }
 
-    .product-box {
-      width: 220px;
-      border: 1px solid #ccc;
-      padding: 10px;
-      cursor: pointer;
-    }
+#products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.product-box {
+  width: 220px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  cursor: pointer;
+}
 
 .product-box img {
   width: 100%;
   height: 150px;
   object-fit: cover;
 }
+
 .header {
   position: fixed;
   top: 0;
@@ -39,14 +37,11 @@
 input, select {
   padding: 8px;
   margin: 10px 5px 20px 0;
-
 }
 </style>
 </head>
 
 <body>
-
-<h2>Products</h2>
 
 <div class="header">
   <h2>Products</h2>
@@ -59,81 +54,101 @@ input, select {
   </select>
 </div>
 
-  <div id="products"></div>
+<br><br><br><br>
 
-  <script>
-    let allProducts = [];
+<div id="products"></div>
 
-    fetch("https://dummyjson.com/products?limit=100")
-      .then(res => res.json())
-      .then(data => {
-        allProducts = data.products;
-        populateCategories();
-        displayProducts();
-      });
+<script>
+let allProducts = [];
 
-    function populateCategories() {
-      const select = document.getElementById("categorySelect");
+const searchInput = document.getElementById("searchInput");
+const categorySelect = document.getElementById("categorySelect");
 
-      const categories =
-        [...new Set(allProducts.map(p => p.category))];
+function storeSearch(productId, keyword) {
+  if (!keyword || keyword.length < 2) return;
 
-      categories.forEach(cat => {
-        const option = document.createElement("option");
-        option.value = cat;
-        option.textContent = cat;
-        select.appendChild(option);
-      });
-    }
+  fetch("http://localhost:5000/search", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      product_id: productId,
+      keyword: keyword
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("Matched products:", data);
+  })
+  .catch(err => console.log(err));
+}
 
-    function displayProducts() {
-      const container = document.getElementById("products");
-      container.innerHTML = "";
+fetch("https://dummyjson.com/products?limit=100")
+.then(res => res.json())
+.then(data => {
+  allProducts = data.products;
+  populateCategories();
+  displayProducts();
+});
 
-      const search =
-        document.getElementById("searchInput")
-          .value.toLowerCase();
+function populateCategories() {
+  const categories =
+    [...new Set(allProducts.map(p => p.category))];
 
-      const selectedCategory =
-        document.getElementById("categorySelect").value;
+  categories.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    categorySelect.appendChild(option);
+  });
+}
 
-      const filtered = allProducts.filter(p => {
-        const catMatch =
-          selectedCategory === "all" ||
-          p.category === selectedCategory;
+function displayProducts() {
+  const container = document.getElementById("products");
+  container.innerHTML = "";
 
-        const searchMatch =
-          p.title.toLowerCase().includes(search) ||
-          p.category.toLowerCase().includes(search) ||
-          p.price.toString().includes(search);
+  const search = searchInput.value.toLowerCase();
+  const selectedCategory = categorySelect.value;
 
-        return catMatch && searchMatch;
-      });
+  const filtered = allProducts.filter(p => {
+    const catMatch =
+      selectedCategory === "all" ||
+      p.category === selectedCategory;
 
-      filtered.forEach(product => {
-        const box = document.createElement("div");
-        box.className = "product-box";
+    const searchMatch =
+      p.title.toLowerCase().includes(search) ||
+      p.category.toLowerCase().includes(search) ||
+      p.price.toString().includes(search);
 
-        box.innerHTML = `
+    return catMatch && searchMatch;
+  });
+
+  filtered.forEach(product => {
+    const box = document.createElement("div");
+    box.className = "product-box";
+
+    box.innerHTML = `
       <img src="${product.thumbnail}">
       <h4>${product.title}</h4>
       <p>${product.category}</p>
       <p>$${product.price}</p>
     `;
 
-        box.onclick = () => {
-          window.location.href =
-            "product.html?id=" + product.id;
-        };
+    box.onclick = () => {
+      storeSearch(product.id, searchInput.value);
+      window.location.href = "product.html?id=" + product.id;
+    };
 
-        container.appendChild(box);
-      });
-    }
+    container.appendChild(box);
+  });
+}
 
-    searchInput.addEventListener("input", displayProducts);
-    categorySelect.addEventListener("change", displayProducts);
-  </script>
+/* store search while typing */
+searchInput.addEventListener("input", () => {
+  displayProducts();
+  storeSearch(null, searchInput.value.trim());
+});
 
+categorySelect.addEventListener("change", displayProducts);
+</script>
 </body>
-
 </html>

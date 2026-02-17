@@ -4,25 +4,15 @@
 <title>Product Details</title>
 
 <style>
-body {
-  font-family: Arial;
-  padding: 20px;
-}
-
-input, select {
-  padding: 8px;
-  margin: 10px 5px 20px 0;
-}
-
-img {
-  width: 300px;
-}
+body { font-family: Arial; padding: 20px; }
+img { width: 300px; }
 
 .review {
   border-top: 1px solid #ccc;
   margin-top: 10px;
   padding-top: 10px;
 }
+
 .header {
   position: fixed;
   top: 0;
@@ -36,114 +26,51 @@ img {
 
 <body>
 
-<h2>Product Details</h2>
-
-<!-- Search & Filter -->
 <div class="header">
-  <h2>Products</h2>
-
-  <input id="searchInput"
-         placeholder="Search title, price or category">
-
-  <select id="categorySelect">
-    <option value="all">All Categories</option>
-  </select>
+  <h2>Product Details</h2>
 </div>
+
+<br><br><br>
 
 <div id="productDetails">Loading...</div>
 
 <script>
-let allProducts = [];
+function storeView(productId, title) {
+  fetch("http://localhost:5000/view", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      product_id: productId,
+      product_name: title
+    })
+  });
+}
 
 const params = new URLSearchParams(window.location.search);
 const productId = params.get("id");
-
-// Load all products only for filtering
-fetch("https://dummyjson.com/products?limit=100")
-.then(res => res.json())
-.then(data => {
-  allProducts = data.products;
-  populateCategories();
-  loadProduct(productId);
-});
-
-function populateCategories() {
-  const select = document.getElementById("categorySelect");
-
-  const categories =
-    [...new Set(allProducts.map(p => p.category))];
-
-  categories.forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat;
-    option.textContent = cat;
-    select.appendChild(option);
-  });
-}
 
 function loadProduct(id) {
   fetch(`https://dummyjson.com/products/${id}`)
   .then(res => res.json())
   .then(product => {
 
-    let reviewsHtml = "<h3>Reviews</h3>";
-
-    if (product.reviews && product.reviews.length > 0) {
-      product.reviews.forEach(r => {
-        reviewsHtml += `
-          <div class="review">
-            <b>${r.reviewerName}</b>
-            <p>Rating: ${r.rating}</p>
-            <p>${r.comment}</p>
-          </div>`;
-      });
-    } else {
-      reviewsHtml += "<p>No reviews available.</p>";
-    }
+    storeView(product.id, product.title);
 
     document.getElementById("productDetails").innerHTML = `
       <img src="${product.thumbnail}">
       <h3>${product.title}</h3>
       <p>${product.description}</p>
-
       <p><b>Category:</b> ${product.category}</p>
-      <p><b>Price:</b> $${product.price}</p>
+      <p><b>Price:</b> ${product.price}</p>
       <p><b>Stock:</b> ${product.stock}</p>
       <p><b>Rating:</b> ${product.rating}</p>
-
-      ${reviewsHtml}
-
-      <br><br>
+      <br>
       <button onclick="history.back()">Back</button>
     `;
   });
 }
 
-// Search navigation to another product
-function searchProduct() {
-  const search =
-    document.getElementById("searchInput")
-      .value.toLowerCase();
-
-  const category =
-    document.getElementById("categorySelect").value;
-
-  const found = allProducts.find(p =>
-    (category === "all" || p.category === category) &&
-    (
-      p.title.toLowerCase().includes(search) ||
-      p.price.toString().includes(search)
-    )
-  );
-
-  if (found) {
-    loadProduct(found.id);
-  }
-}
-
-searchInput.addEventListener("input", searchProduct);
-categorySelect.addEventListener("change", searchProduct);
-
+loadProduct(productId);
 </script>
 
 </body>
