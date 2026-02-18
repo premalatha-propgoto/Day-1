@@ -2,153 +2,416 @@
 <html>
 <head>
 <title>Products</title>
-
 <style>
-body { font-family: Arial; padding: 20px; }
-
-#products {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
+body { 
+  font-family: 
+  Arial; 
+  padding:20px; 
+  margin:0;
+ }
+#products { 
+  display:flex; 
+  flex-wrap:wrap; 
+  gap:15px; 
+  margin-top:80px; 
 }
-
 .product-box {
-  width: 220px;
-  border: 1px solid #ccc;
-  padding: 10px;
-  cursor: pointer;
+width:160px; 
+padding:10px; 
+border:1px solid #ccc; 
+border-radius:8px; 
+display:flex; 
+flex-direction:column; 
+gap:6px; 
+position:relative; 
+cursor:pointer;
+ }
+.product-box img { 
+  width:100%; 
+  height:90px; 
+  object-fit:cover; 
+  border-radius:4px; 
 }
-
-.product-box img {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
+.delete-icon, .edit-icon { 
+  position:absolute; 
+  bottom:5px; 
+  font-size:16px; 
+  cursor:pointer; 
+  z-index:10; 
+}
+.delete-icon { 
+  right:5px; 
+  color:red; 
+}
+.edit-icon {
+   right:25px; 
+   color:#007BFF;
+   }
+  
+.product-box p:first-of-type {
+  text-transform: capitalize;
 }
 
 .header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background: white;
-  padding: 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+    padding: 10px 20px;   /* top/bottom 10px, left/right 20px */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-sizing: border-box; /* ensure padding is included in width */
 }
 
-input, select {
-  padding: 8px;
-  margin: 10px 5px 20px 0;
+.header h2 {
+    margin: 0;
+    font-size: 22px;
+    flex-shrink: 0; /* prevent shrinking */
 }
+
+.header input, .header select {
+    height: 40px;
+    padding: 0 12px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    flex-shrink: 0;
+}
+
+.header input {
+    width: 220px;  /* adjust width to fit header */
+}
+
+.header select {
+    width: 150px; /* adjust width */
+}
+
+.header button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0 15px;
+    height: 40px;
+    flex-shrink: 0;
+}
+
+.header button:hover {
+    background-color: #0056b3;
+}
+
+.header h2 { 
+  margin:0; 
+  font-size:22px; 
+  flex:1; 
+}
+input, select { 
+  padding:6px 10px; 
+  margin:0 5px;
+   height:32px;
+   }
+button { 
+  cursor:pointer; 
+}
+#pagination { 
+  text-align:center; 
+  margin-top:20px; }
+.page-btn { 
+  padding:8px 15px; 
+  margin:3px; 
+  border:1px solid #333; 
+  background:#f2f2f2; 
+  cursor:pointer;
+ }
+.page-btn.active {
+   background:#333; 
+   color:white; 
+  }
+
+/* Modal styles */
+.modal { 
+  display:none; 
+  position:fixed; 
+  top:0; left:0; width:100%; height:100%; 
+  background:rgba(0,0,0,0.5); 
+  justify-content:center; 
+  align-items:center; 
+  z-index:1000; 
+}
+.modal-content { 
+  background:white; 
+  padding:20px; 
+  border-radius:8px; 
+  width:400px; 
+  position:relative; 
+  pointer-events:auto; 
+}
+.modal .close { 
+  position:absolute; 
+  top:5px; 
+  right:10px; 
+  font-size:18px; 
+  cursor:pointer;
+ }
+.modal input, .modal textarea { 
+  width:100%; 
+  margin:5px 0; 
+  padding:6px; 
+}
+.modal button {
+   padding:8px 12px; 
+   margin-top:10px; 
+  background-color: #007BFF;
+}
+.modal .edit-icon, .modal .delete-icon { 
+  display:none; 
+  }
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
-
 <body>
 
 <div class="header">
   <h2>Products</h2>
-
-  <input id="searchInput"
-         placeholder="Search title, price or category">
-
+  <input id="searchInput" placeholder="Search title, price or category">
   <select id="categorySelect">
     <option value="all">All Categories</option>
   </select>
+  <button id="addProductBtn">Add Product</button>
 </div>
 
-<br><br><br><br>
-
 <div id="products"></div>
+<div id="pagination"></div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3>Edit Product</h3>
+    <input type="hidden" id="editId">
+    <input type="text" id="editTitle" placeholder="Title">
+    <textarea id="editDescription" placeholder="Description"></textarea>
+    <input type="text" id="editCategory" placeholder="Category">
+    <input type="number" step="0.01" id="editPrice" placeholder="Price">
+    <input type="number" step="0.01" id="editDiscount" placeholder="Discount %">
+    <input type="number" id="editStock" placeholder="Stock">
+    <input type="number" step="0.01" id="editRating" placeholder="Rating">
+    <input type="text" id="editBrand" placeholder="Brand">
+    <button id="saveEditBtn">Save Changes</button>
+  </div>
+</div>
+
+<!-- Add Modal -->
+<div id="addModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3>Add Product</h3>
+    <input type="text" id="addTitle" placeholder="Title">
+    <textarea id="addDescription" placeholder="Description"></textarea>
+    <input type="text" id="addCategory" placeholder="Category">
+    <input type="number" step="0.01" id="addPrice" placeholder="Price">
+    <input type="number" step="0.01" id="addDiscount" placeholder="Discount %">
+    <input type="number" id="addStock" placeholder="Stock">
+    <input type="number" step="0.01" id="addRating" placeholder="Rating">
+    <input type="text" id="addBrand" placeholder="Brand">
+    <button id="saveAddBtn">Add Product</button>
+  </div>
+</div>
 
 <script>
-let allProducts = [];
+let currentPage=1;
+let limit=12;
+let totalPages=1;
 
 const searchInput = document.getElementById("searchInput");
 const categorySelect = document.getElementById("categorySelect");
 
-function storeSearch(productId, keyword) {
-  if (!keyword || keyword.length < 2) return;
+// Modals
+const editModal = document.getElementById("editModal");
+const addModal = document.getElementById("addModal");
+const closeEdit = editModal.querySelector(".close");
+const closeAdd = addModal.querySelector(".close");
+const saveEditBtn = document.getElementById("saveEditBtn");
+const saveAddBtn = document.getElementById("saveAddBtn");
+const addProductBtn = document.getElementById("addProductBtn");
 
-  fetch("http://localhost:5000/search", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      product_id: productId,
-      keyword: keyword
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    console.log("Matched products:", data);
-  })
-  .catch(err => console.log(err));
-}
+// Fetch products
+function fetchProducts(page=1){
+  const keyword = searchInput.value.trim();
+  const category = categorySelect.value;
+  let url = `http://localhost:5000/get_products?page=${page}&limit=${limit}`;
+  if(keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+  if(category && category!=='all') url += `&category=${encodeURIComponent(category)}`;
 
-fetch("https://dummyjson.com/products?limit=100")
-.then(res => res.json())
-.then(data => {
-  allProducts = data.products;
-  populateCategories();
-  displayProducts();
-});
-
-function populateCategories() {
-  const categories =
-    [...new Set(allProducts.map(p => p.category))];
-
-  categories.forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat;
-    option.textContent = cat;
-    categorySelect.appendChild(option);
+  fetch(url)
+  .then(res=>res.json())
+  .then(data=>{
+    renderProducts(data.data);
+    totalPages = data.totalPages;
+    renderPagination();
+    populateCategories(data.data);
   });
 }
 
-function displayProducts() {
+// Populate categories
+function populateCategories(products){
+  const existing = [...categorySelect.options].map(o=>o.value);
+  products.forEach(p=>{
+    if(!existing.includes(p.category)){
+      const opt = document.createElement("option");
+      opt.value = p.category; opt.innerText = p.category;
+      categorySelect.appendChild(opt);
+    }
+  });
+}
+
+// Render products
+function renderProducts(products){
   const container = document.getElementById("products");
-  container.innerHTML = "";
-
-  const search = searchInput.value.toLowerCase();
-  const selectedCategory = categorySelect.value;
-
-  const filtered = allProducts.filter(p => {
-    const catMatch =
-      selectedCategory === "all" ||
-      p.category === selectedCategory;
-
-    const searchMatch =
-      p.title.toLowerCase().includes(search) ||
-      p.category.toLowerCase().includes(search) ||
-      p.price.toString().includes(search);
-
-    return catMatch && searchMatch;
-  });
-
-  filtered.forEach(product => {
-    const box = document.createElement("div");
-    box.className = "product-box";
-
-    box.innerHTML = `
-      <img src="${product.thumbnail}">
-      <h4>${product.title}</h4>
-      <p>${product.category}</p>
-      <p>$${product.price}</p>
+  container.innerHTML="";
+  if(products.length===0){ container.innerHTML="<p>No products found</p>"; return;}
+  
+  products.forEach(p=>{
+    const box=document.createElement("div");
+    box.className="product-box";
+    box.innerHTML=`
+      <img src="default.jpg">
+      <h4>${p.title}</h4>
+      <p>${p.category}</p>
+      <p>$${p.price}</p>
+      <i class="fas fa-pen edit-icon"></i>
+      <i class="fas fa-trash delete-icon"></i>
     `;
 
-    box.onclick = () => {
-      storeSearch(product.id, searchInput.value);
-      window.location.href = "product.html?id=" + product.id;
-    };
+    // Delete
+    box.querySelector(".delete-icon").addEventListener("click",(e)=>{
+      e.stopPropagation(); deleteProduct(p.id);
+    });
+
+    // Edit
+    box.querySelector(".edit-icon").addEventListener("click",(e)=>{
+      e.stopPropagation(); openEditModal(p);
+    });
 
     container.appendChild(box);
   });
 }
 
-/* store search while typing */
-searchInput.addEventListener("input", () => {
-  displayProducts();
-  storeSearch(null, searchInput.value.trim());
+// Delete product
+function deleteProduct(id){
+  if(!confirm("Are you sure to delete?")) return;
+  fetch(`http://localhost:5000/product/${id}`,{method:"DELETE"})
+  .then(()=>fetchProducts(currentPage));
+}
+
+// Pagination
+function renderPagination(){
+  const pag=document.getElementById("pagination");
+  pag.innerHTML="";
+  for(let i=1;i<=totalPages;i++){
+    const btn=document.createElement("button");
+    btn.className="page-btn"+(i===currentPage?" active":"");
+    btn.innerText=i;
+    btn.onclick=()=>{currentPage=i; fetchProducts(currentPage);}
+    pag.appendChild(btn);
+  }
+}
+
+// Event listeners
+searchInput.addEventListener("input",()=>{currentPage=1; fetchProducts();});
+categorySelect.addEventListener("change",()=>{currentPage=1; fetchProducts();});
+
+// Open Add modal
+addProductBtn.onclick = (e) => {
+  e.stopPropagation();
+  addModal.style.display="flex";
+};
+
+// Open Edit modal
+function openEditModal(p){
+  editModal.style.display="flex";
+  document.getElementById("editId").value = p.id;
+  document.getElementById("editTitle").value = p.title;
+  document.getElementById("editDescription").value = p.description;
+  document.getElementById("editCategory").value = p.category;
+  document.getElementById("editPrice").value = p.price;
+  document.getElementById("editDiscount").value = p.discount_percentage || 0;
+  document.getElementById("editStock").value = p.stock;
+  document.getElementById("editRating").value = p.rating;
+  document.getElementById("editBrand").value = p.brand;
+}
+
+// Close modals
+closeEdit.onclick = ()=> editModal.style.display="none";
+closeAdd.onclick = ()=> addModal.style.display="none";
+
+// Close modal by clicking outside
+editModal.onclick = addModal.onclick = function(){ this.style.display="none"; };
+document.querySelectorAll(".modal-content").forEach(mc=>{
+  mc.onclick = e => e.stopPropagation(); // prevent modal content clicks from closing
 });
 
-categorySelect.addEventListener("change", displayProducts);
+// Save edits
+saveEditBtn.onclick = ()=>{
+  const id = document.getElementById("editId").value;
+  const updatedProduct = {
+    title: document.getElementById("editTitle").value.trim(),
+    description: document.getElementById("editDescription").value.trim(),
+    category: document.getElementById("editCategory").value.trim(),
+    price: parseFloat(document.getElementById("editPrice").value) || 0,
+    discount_percentage: parseFloat(document.getElementById("editDiscount").value) || 0,
+    stock: parseInt(document.getElementById("editStock").value) || 0,
+    rating: parseFloat(document.getElementById("editRating").value) || 0,
+    brand: document.getElementById("editBrand").value.trim()
+  };
+
+  fetch(`http://localhost:5000/product/${id}`, {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(updatedProduct)
+  }).then(res=>res.json())
+    .then(data=>{
+      if(data.message==="Product updated successfully"){
+        alert("Product updated!");
+        editModal.style.display="none";
+        fetchProducts(currentPage);
+      } else alert(data.message || "Update failed");
+    });
+};
+
+// Save new product
+saveAddBtn.onclick = ()=>{
+  const newProduct = {
+    title: document.getElementById("addTitle").value.trim(),
+    description: document.getElementById("addDescription").value.trim(),
+    category: document.getElementById("addCategory").value.trim(),
+    price: parseFloat(document.getElementById("addPrice").value) || 0,
+    discount_percentage: parseFloat(document.getElementById("addDiscount").value) || 0,
+    stock: parseInt(document.getElementById("addStock").value) || 0,
+    rating: parseFloat(document.getElementById("addRating").value) || 0,
+    brand: document.getElementById("addBrand").value.trim()
+  };
+
+  fetch(`http://localhost:5000/product`, {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(newProduct)
+  }).then(res=>res.json())
+    .then(data=>{
+      alert("Product added!");
+      addModal.style.display="none";
+      fetchProducts(currentPage);
+      // clear inputs
+      ["addTitle","addDescription","addCategory","addPrice","addDiscount","addStock","addRating","addBrand"]
+        .forEach(id=>document.getElementById(id).value="");
+    });
+};
+
+fetchProducts();
 </script>
 </body>
 </html>

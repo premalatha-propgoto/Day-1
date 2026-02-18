@@ -35,6 +35,20 @@ img { width: 300px; }
 <div id="productDetails">Loading...</div>
 
 <script>
+function deleteProduct(id) {
+  if (!confirm("Are you sure you want to delete this product?")) return;
+
+  fetch(`http://localhost:5000/product/${id}`, {
+    method: "DELETE"
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert("Product deleted successfully");
+    window.location.href = "index.html"; 
+  })
+  .catch(err => console.error(err));
+}
+
 function storeView(productId, title) {
   fetch("http://localhost:5000/view", {
     method: "POST",
@@ -50,28 +64,45 @@ const params = new URLSearchParams(window.location.search);
 const productId = params.get("id");
 
 function loadProduct(id) {
-  fetch(`https://dummyjson.com/products/${id}`)
+  fetch(`http://localhost:5000/get_products/${id}`)
   .then(res => res.json())
   .then(product => {
 
     storeView(product.id, product.title);
 
     document.getElementById("productDetails").innerHTML = `
-      <img src="${product.thumbnail}">
-      <h3>${product.title}</h3>
-      <p>${product.description}</p>
-      <p><b>Category:</b> ${product.category}</p>
-      <p><b>Price:</b> ${product.price}</p>
-      <p><b>Stock:</b> ${product.stock}</p>
-      <p><b>Rating:</b> ${product.rating}</p>
-      <br>
-      <button onclick="history.back()">Back</button>
+      <div style="position:relative;">
+        
+        <span 
+          onclick="deleteProduct(${product.id})"
+          style="
+            position:absolute;
+            bottom:10px;
+            right:10px;
+            cursor:pointer;
+            font-size:22px;
+            color:red;
+          ">
+          🗑️
+        </span>
+
+        <!-- 🔥 Dummy Image for all products -->
+        <img src="default.jpg">
+
+        <h3>${product.title}</h3>
+        <p>${product.description}</p>
+        <p><b>Category:</b> ${product.category}</p>
+        <p><b>Price:</b> ${product.price}</p>
+        <p><b>Stock:</b> ${product.stock}</p>
+        <p><b>Rating:</b> ${product.rating}</p>
+        <br>
+        <button onclick="history.back()">Back</button>
+      </div>
     `;
   });
 }
 
 loadProduct(productId);
 </script>
-
 </body>
 </html>
