@@ -170,10 +170,37 @@ button {
 .modal .edit-icon, .modal .delete-icon { 
   display:none; 
   }
+  #snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  background-color: #333;
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: 6px;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  font-size: 16px;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+#snackbar.show {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#snackbar.success { background-color: #4caf50; }
+#snackbar.error { background-color: #e53935; }
+
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
 <body>
+<div id="snackbar"></div>
 
 <div class="header">
   <h2>Products</h2>
@@ -223,6 +250,16 @@ button {
 </div>
 
 <script>
+  function showSnackbar(message, type = "success") {
+  const sb = document.getElementById("snackbar");
+  sb.innerText = message;
+  sb.className = `show ${type}`;
+
+  setTimeout(() => {
+    sb.className = sb.className.replace("show", "");
+  }, 3000);
+}
+
 let currentPage=1;
 let limit=12;
 let totalPages=1;
@@ -269,11 +306,13 @@ function populateCategories(products){
   });
 }
 
-// Render products
 function renderProducts(products){
   const container = document.getElementById("products");
   container.innerHTML="";
-  if(products.length===0){ container.innerHTML="<p>No products found</p>"; return;}
+  if(products.length===0){ 
+      container.innerHTML="<p>No products found</p>"; 
+      return;
+  }
   
   products.forEach(p=>{
     const box=document.createElement("div");
@@ -287,26 +326,27 @@ function renderProducts(products){
       <i class="fas fa-trash delete-icon"></i>
     `;
 
-    // Delete
-    box.querySelector(".delete-icon").addEventListener("click",(e)=>{
-      e.stopPropagation(); deleteProduct(p.id);
+    // ✅ OPEN PRODUCT DETAILS PAGE (THIS WAS MISSING)
+    box.addEventListener("click", () => {
+        window.location.href = `product.html?id=${p.id}`;
     });
 
-    // Edit
+    // Delete icon — stop opening detail page
+    box.querySelector(".delete-icon").addEventListener("click",(e)=>{
+      e.stopPropagation(); 
+      deleteProduct(p.id);
+    });
+
+    // Edit icon — stop opening detail page
     box.querySelector(".edit-icon").addEventListener("click",(e)=>{
-      e.stopPropagation(); openEditModal(p);
+      e.stopPropagation();
+      openEditModal(p);
     });
 
     container.appendChild(box);
   });
 }
 
-// Delete product
-function deleteProduct(id){
-  if(!confirm("Are you sure to delete?")) return;
-  fetch(`http://localhost:5000/product/${id}`,{method:"DELETE"})
-  .then(()=>fetchProducts(currentPage));
-}
 
 // Pagination
 function renderPagination(){
@@ -356,60 +396,135 @@ document.querySelectorAll(".modal-content").forEach(mc=>{
 });
 
 // Save edits
-saveEditBtn.onclick = ()=>{
+// Save edits with validation
+saveEditBtn.onclick = () => {
+
   const id = document.getElementById("editId").value;
+
+  const title = document.getElementById("editTitle").value.trim();
+  const description = document.getElementById("editDescription").value.trim();
+  const category = document.getElementById("editCategory").value.trim();
+  const price = document.getElementById("editPrice").value;
+  const discount = document.getElementById("editDiscount").value;
+  const stock = document.getElementById("editStock").value;
+  const rating = document.getElementById("editRating").value;
+  const brand = document.getElementById("editBrand").value.trim();
+
+  // Required field check
+  if (!title || !description || !category || !price || !discount || !stock || !rating || !brand) {
+      showSnackbar("⚠️ All fields are required!", "error");
+      return;
+  }
+
+  // Validation rules
+  if (price <= 0) {
+      showSnackbar("⚠️ Price must be greater than 0", "error");
+      return;
+  }
+
+  if (discount < 0 || discount > 100) {
+      showSnackbar("⚠️ Discount must be between 0 and 100", "error");
+      return;
+  }
+
+  if (rating < 0 || rating > 5) {
+      showSnackbar("⚠️ Rating must be between 0 and 5", "error");
+      return;
+  }
+
   const updatedProduct = {
-    title: document.getElementById("editTitle").value.trim(),
-    description: document.getElementById("editDescription").value.trim(),
-    category: document.getElementById("editCategory").value.trim(),
-    price: parseFloat(document.getElementById("editPrice").value) || 0,
-    discount_percentage: parseFloat(document.getElementById("editDiscount").value) || 0,
-    stock: parseInt(document.getElementById("editStock").value) || 0,
-    rating: parseFloat(document.getElementById("editRating").value) || 0,
-    brand: document.getElementById("editBrand").value.trim()
+      title,
+      description,
+      category,
+      price: parseFloat(price),
+      discount_percentage: parseFloat(discount),
+      stock: parseInt(stock),
+      rating: parseFloat(rating),
+      brand
   };
 
   fetch(`http://localhost:5000/product/${id}`, {
-    method:"POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(updatedProduct)
-  }).then(res=>res.json())
-    .then(data=>{
-      if(data.message==="Product updated successfully"){
-        alert("Product updated!");
-        editModal.style.display="none";
-        fetchProducts(currentPage);
-      } else alert(data.message || "Update failed");
-    });
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedProduct)
+  })
+  .then(res => res.json())
+  .then(data => {
+      if (data.message === "Product updated successfully") {
+          showSnackbar("Product updated!");
+          editModal.style.display = "none";
+          fetchProducts(currentPage);
+      } else {
+          showSnackbar(data.message || "Update failed", "error");
+      }
+  });
 };
 
+
 // Save new product
+// Save new product with validation
 saveAddBtn.onclick = ()=>{
+
+  const title = document.getElementById("addTitle").value.trim();
+  const description = document.getElementById("addDescription").value.trim();
+  const category = document.getElementById("addCategory").value.trim();
+  const price = document.getElementById("addPrice").value;
+  const discount = document.getElementById("addDiscount").value;
+  const stock = document.getElementById("addStock").value;
+  const rating = document.getElementById("addRating").value;
+  const brand = document.getElementById("addBrand").value.trim();
+
+  // Check required fields
+  if (!title || !description || !category || !price || !discount || !stock || !rating || !brand) {
+      showSnackbar("⚠️ All fields are required!", "error");
+      return;
+  }
+
+  // More validation rules
+  if (price <= 0) {
+      showSnackbar("⚠️ Price must be greater than 0", "error");
+      return;
+  }
+
+  if (discount < 0 || discount > 100) {
+      showSnackbar("⚠️ Discount must be between 0 and 100", "error");
+      return;
+  }
+
+  if (rating < 0 || rating > 5) {
+      showSnackbar("⚠️ Rating must be between 0 and 5", "error");
+      return;
+  }
+
+  // Build product object after validation
   const newProduct = {
-    title: document.getElementById("addTitle").value.trim(),
-    description: document.getElementById("addDescription").value.trim(),
-    category: document.getElementById("addCategory").value.trim(),
-    price: parseFloat(document.getElementById("addPrice").value) || 0,
-    discount_percentage: parseFloat(document.getElementById("addDiscount").value) || 0,
-    stock: parseInt(document.getElementById("addStock").value) || 0,
-    rating: parseFloat(document.getElementById("addRating").value) || 0,
-    brand: document.getElementById("addBrand").value.trim()
+      title,
+      description,
+      category,
+      price: parseFloat(price),
+      discount_percentage: parseFloat(discount),
+      stock: parseInt(stock),
+      rating: parseFloat(rating),
+      brand
   };
 
   fetch(`http://localhost:5000/product`, {
-    method:"POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(newProduct)
-  }).then(res=>res.json())
-    .then(data=>{
-      alert("Product added!");
+      method:"POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(newProduct)
+  })
+  .then(res=>res.json())
+  .then(data=>{
+      showSnackbar("Product added!");
       addModal.style.display="none";
       fetchProducts(currentPage);
+
       // clear inputs
       ["addTitle","addDescription","addCategory","addPrice","addDiscount","addStock","addRating","addBrand"]
         .forEach(id=>document.getElementById(id).value="");
-    });
+  });
 };
+
 
 fetchProducts();
 </script>
