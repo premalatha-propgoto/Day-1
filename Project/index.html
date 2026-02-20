@@ -16,13 +16,13 @@ body {
   margin-top:80px; 
 }
 .product-box {
-width:160px; 
-padding:10px; 
+width:150px; 
+padding:8px; 
 border:1px solid #ccc; 
 border-radius:8px; 
 display:flex; 
 flex-direction:column; 
-gap:6px; 
+gap:3px; 
 position:relative; 
 cursor:pointer;
  }
@@ -31,6 +31,12 @@ cursor:pointer;
   height:90px; 
   object-fit:cover; 
   border-radius:4px; 
+}
+.product-box h4,
+.product-box p {
+  margin: 2px 0;       
+  font-size: 14px;  
+  line-height: 1.2;    
 }
 .delete-icon, .edit-icon { 
   position:absolute; 
@@ -70,7 +76,7 @@ cursor:pointer;
 .header h2 {
     margin: 0;
     font-size: 22px;
-    flex-shrink: 0; /* prevent shrinking */
+    flex-shrink: 0; 
 }
 
 .header input, .header select {
@@ -149,6 +155,8 @@ button {
   width:400px; 
   position:relative; 
   pointer-events:auto; 
+  max-height: 85vh;     /* NEW: keep modal inside screen */
+  overflow-y: auto;
 }
 .modal .close { 
   position:absolute; 
@@ -159,8 +167,9 @@ button {
  }
 .modal input, .modal textarea { 
   width:100%; 
-  margin:5px 0; 
-  padding:6px; 
+  margin: 3px 0; 
+  padding: 4px;         /* smaller */
+  font-size: 13px; 
 }
 .modal button {
    padding:8px 12px; 
@@ -170,6 +179,7 @@ button {
 .modal .edit-icon, .modal .delete-icon { 
   display:none; 
   }
+
   #snackbar {
   visibility: hidden;
   min-width: 250px;
@@ -195,12 +205,20 @@ button {
 
 #snackbar.success { background-color: #4caf50; }
 #snackbar.error { background-color: #e53935; }
+.error {
+  color: #e53935;
+  font-size: 12px;
+  margin-top: -4px;
+  display: block;
+  height: 14px;
+}
+
 
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
 <body>
-<div id="snackbar"></div>
+
 
 <div class="header">
   <h2>Products</h2>
@@ -219,37 +237,95 @@ button {
   <div class="modal-content">
     <span class="close">&times;</span>
     <h3>Edit Product</h3>
+    
     <input type="hidden" id="editId">
-    <input type="text" id="editTitle" placeholder="Title">
-    <textarea id="editDescription" placeholder="Description"></textarea>
-    <input type="text" id="editCategory" placeholder="Category">
-    <input type="number" step="0.01" id="editPrice" placeholder="Price">
+
+    <div>
+      <input type="text" id="editTitle" placeholder="Title">
+      <small class="error" id="errEditTitle"></small>
+    </div>
+
+    <div>
+      <textarea id="editDescription" placeholder="Description"></textarea>
+    </div>
+
+    <div>
+      <input type="text" id="editCategory" placeholder="Category">
+      <small class="error" id="errEditCategory"></small>
+    </div>
+
+    <div>
+      <input type="number" step="0.01" id="editPrice" placeholder="Price">
+      <small class="error" id="errEditPrice"></small>
+    </div>
+
     <input type="number" step="0.01" id="editDiscount" placeholder="Discount %">
     <input type="number" id="editStock" placeholder="Stock">
     <input type="number" step="0.01" id="editRating" placeholder="Rating">
     <input type="text" id="editBrand" placeholder="Brand">
+
     <button id="saveEditBtn">Save Changes</button>
   </div>
 </div>
+
 
 <!-- Add Modal -->
 <div id="addModal" class="modal">
   <div class="modal-content">
     <span class="close">&times;</span>
     <h3>Add Product</h3>
-    <input type="text" id="addTitle" placeholder="Title">
-    <textarea id="addDescription" placeholder="Description"></textarea>
-    <input type="text" id="addCategory" placeholder="Category">
-    <input type="number" step="0.01" id="addPrice" placeholder="Price">
-    <input type="number" step="0.01" id="addDiscount" placeholder="Discount %">
-    <input type="number" id="addStock" placeholder="Stock">
-    <input type="number" step="0.01" id="addRating" placeholder="Rating">
-    <input type="text" id="addBrand" placeholder="Brand">
+
+    <div>
+      <input type="number" id="addId" placeholder="Product ID">
+      <small class="error" id="errAddId"></small>
+    </div>
+
+    <div>
+      <input type="text" id="addTitle" placeholder="Title">
+      <small class="error" id="errAddTitle"></small>
+    </div>
+
+    <div>
+      <textarea id="addDescription" placeholder="Description"></textarea>
+    </div>
+
+    <div>
+      <input type="text" id="addCategory" placeholder="Category">
+      <small class="error" id="errAddCategory"></small>
+    </div>
+
+    <div>
+      <input type="number" step="0.01" id="addPrice" placeholder="Price">
+      <small class="error" id="errAddPrice"></small>
+    </div>
+
+    <div>
+      <input type="number" step="0.01" id="addDiscount" placeholder="Discount %">
+    </div>
+
+    <div>
+      <input type="number" id="addStock" placeholder="Stock">
+    </div>
+
+    <div>
+      <input type="number" step="0.01" id="addRating" placeholder="Rating">
+    </div>
+
+    <div>
+      <input type="text" id="addBrand" placeholder="Brand">
+    </div>
+
+   
     <button id="saveAddBtn">Add Product</button>
+
   </div>
 </div>
 
+<div id="snackbar"></div>
+
 <script>
+
+  
   function showSnackbar(message, type = "success") {
   const sb = document.getElementById("snackbar");
   sb.innerText = message;
@@ -294,17 +370,22 @@ function fetchProducts(page=1){
   });
 }
 
-// Populate categories
-function populateCategories(products){
-  const existing = [...categorySelect.options].map(o=>o.value);
-  products.forEach(p=>{
-    if(!existing.includes(p.category)){
-      const opt = document.createElement("option");
-      opt.value = p.category; opt.innerText = p.category;
-      categorySelect.appendChild(opt);
-    }
+function populateCategories(products) {
+  
+  categorySelect.innerHTML = '<option value="all">All Categories</option>';
+
+
+  const uniqueCategories = [...new Set(products.map(p => p.category))];
+
+  
+  uniqueCategories.forEach(cat => {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.innerText = cat;
+    categorySelect.appendChild(opt);
   });
 }
+
 
 function renderProducts(products){
   const container = document.getElementById("products");
@@ -365,11 +446,12 @@ function renderPagination(){
 searchInput.addEventListener("input",()=>{currentPage=1; fetchProducts();});
 categorySelect.addEventListener("change",()=>{currentPage=1; fetchProducts();});
 
-// Open Add modal
 addProductBtn.onclick = (e) => {
   e.stopPropagation();
-  addModal.style.display="flex";
+  clearAddForm();     // ← RESET FORM BEFORE OPEN
+  addModal.style.display = "flex";
 };
+
 
 // Open Edit modal
 function openEditModal(p){
@@ -387,7 +469,11 @@ function openEditModal(p){
 
 // Close modals
 closeEdit.onclick = ()=> editModal.style.display="none";
-closeAdd.onclick = ()=> addModal.style.display="none";
+closeAdd.onclick = () => {
+  clearAddForm();     // ← RESET FORM WHEN CLOSED
+  addModal.style.display = "none";
+};
+
 
 // Close modal by clicking outside
 editModal.onclick = addModal.onclick = function(){ this.style.display="none"; };
@@ -397,136 +483,230 @@ document.querySelectorAll(".modal-content").forEach(mc=>{
 
 // Save edits
 // Save edits with validation
+
 saveEditBtn.onclick = () => {
 
+  // get values
   const id = document.getElementById("editId").value;
-
   const title = document.getElementById("editTitle").value.trim();
-  const description = document.getElementById("editDescription").value.trim();
   const category = document.getElementById("editCategory").value.trim();
-  const price = document.getElementById("editPrice").value;
-  const discount = document.getElementById("editDiscount").value;
-  const stock = document.getElementById("editStock").value;
-  const rating = document.getElementById("editRating").value;
-  const brand = document.getElementById("editBrand").value.trim();
+  const price = document.getElementById("editPrice").value.trim();
 
-  // Required field check
-  if (!title || !description || !category || !price || !discount || !stock || !rating || !brand) {
-      showSnackbar("⚠️ All fields are required!", "error");
-      return;
+  // clear old errors
+  document.getElementById("errEditTitle").innerText = "";
+  document.getElementById("errEditCategory").innerText = "";
+  document.getElementById("errEditPrice").innerText = "";
+
+  let hasError = false;
+
+  // Required field validations
+  if (!title) {
+    document.getElementById("errEditTitle").innerText = "Title is required";
+    hasError = true;
   }
 
-  // Validation rules
-  if (price <= 0) {
-      showSnackbar("⚠️ Price must be greater than 0", "error");
-      return;
+  if (!category) {
+    document.getElementById("errEditCategory").innerText = "Category is required";
+    hasError = true;
   }
 
-  if (discount < 0 || discount > 100) {
-      showSnackbar("⚠️ Discount must be between 0 and 100", "error");
-      return;
+  if (!price) {
+    document.getElementById("errEditPrice").innerText = "Price is required";
+    hasError = true;
+  } else if (price <= 0) {
+    document.getElementById("errEditPrice").innerText = "Price must be greater than 0";
+    hasError = true;
   }
 
-  if (rating < 0 || rating > 5) {
-      showSnackbar("⚠️ Rating must be between 0 and 5", "error");
-      return;
-  }
+  // STOP if validation failed → no snackbar!
+  if (hasError) return;
 
+  // Create updated product
   const updatedProduct = {
-      title,
-      description,
-      category,
-      price: parseFloat(price),
-      discount_percentage: parseFloat(discount),
-      stock: parseInt(stock),
-      rating: parseFloat(rating),
-      brand
+    title,
+    description: document.getElementById("editDescription").value.trim(),
+    category,
+    price: parseFloat(price),
+    discount_percentage: parseFloat(document.getElementById("editDiscount").value || 0),
+    stock: parseInt(document.getElementById("editStock").value || 0),
+    rating: parseFloat(document.getElementById("editRating").value || 0),
+    brand: document.getElementById("editBrand").value.trim()
   };
 
+  // Update API request
   fetch(`http://localhost:5000/product/${id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedProduct)
+    method:"PUT",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(updatedProduct)
   })
   .then(res => res.json())
   .then(data => {
-      if (data.message === "Product updated successfully") {
-          showSnackbar("Product updated!");
-          editModal.style.display = "none";
-          fetchProducts(currentPage);
-      } else {
-          showSnackbar(data.message || "Update failed", "error");
-      }
+
+      // ONLY SUCCESS USES SNACKBAR
+      showSnackbar("Product updated successfully!", "success");
+
+      // close modal
+      editModal.style.display = "none";
+
+      // refresh list
+      fetchProducts(currentPage);
   });
 };
 
+  // 🔍 Check if product title already exists in DB
+function checkDuplicateTitle(title) {
+  return fetch(`http://localhost:5000/check_title?title=${encodeURIComponent(title)}`)
+    .then(res => res.json());
+}
 
-// Save new product
-// Save new product with validation
-saveAddBtn.onclick = ()=>{
+     // Save new product with inline errors
+saveAddBtn.onclick = () => {
 
+  // get fields
+  const id = document.getElementById("addId").value.trim();
   const title = document.getElementById("addTitle").value.trim();
-  const description = document.getElementById("addDescription").value.trim();
   const category = document.getElementById("addCategory").value.trim();
-  const price = document.getElementById("addPrice").value;
-  const discount = document.getElementById("addDiscount").value;
-  const stock = document.getElementById("addStock").value;
-  const rating = document.getElementById("addRating").value;
-  const brand = document.getElementById("addBrand").value.trim();
+  const price = document.getElementById("addPrice").value.trim();
 
-  // Check required fields
-  if (!title || !description || !category || !price || !discount || !stock || !rating || !brand) {
-      showSnackbar("⚠️ All fields are required!", "error");
-      return;
+  // clear old errors
+  document.getElementById("errAddId").innerText = "";
+  document.getElementById("errAddTitle").innerText = "";
+  document.getElementById("errAddCategory").innerText = "";
+  document.getElementById("errAddPrice").innerText = "";
+
+  let hasError = false;
+
+  // Required field checks
+  if (!id) {
+    document.getElementById("errAddId").innerText = "Product ID is required";
+    hasError = true;
+  }
+  if (!title) {
+    document.getElementById("errAddTitle").innerText = "Title is required";
+    hasError = true;
+  }
+  if (!category) {
+    document.getElementById("errAddCategory").innerText = "Category is required";
+    hasError = true;
+  }
+  if (!price) {
+    document.getElementById("errAddPrice").innerText = "Price is required";
+    hasError = true;
+  } else if (price <= 0) {
+    document.getElementById("errAddPrice").innerText = "Price must be greater than 0";
+    hasError = true;
   }
 
-  // More validation rules
-  if (price <= 0) {
-      showSnackbar("⚠️ Price must be greater than 0", "error");
-      return;
-  }
+  // STOP if validation failed
+ // STOP if validation failed
+if (hasError) return;
 
-  if (discount < 0 || discount > 100) {
-      showSnackbar("⚠️ Discount must be between 0 and 100", "error");
-      return;
-  }
+// 🔍 Check duplicate title before submitting
+checkDuplicateTitle(title).then(result => {
 
-  if (rating < 0 || rating > 5) {
-      showSnackbar("⚠️ Rating must be between 0 and 5", "error");
-      return;
-  }
+    if (result.exists) {
+        document.getElementById("errAddTitle").innerText = "This product name already exists. Enter another.";
+        return; // STOP submission
+    }
 
-  // Build product object after validation
-  const newProduct = {
-      title,
-      description,
-      category,
-      price: parseFloat(price),
-      discount_percentage: parseFloat(discount),
-      stock: parseInt(stock),
-      rating: parseFloat(rating),
-      brand
-  };
+    // Continue if valid & NOT duplicate
+    const newProduct = {
+        id: parseInt(id),
+        title,
+        description: document.getElementById("addDescription").value.trim(),
+        category,
+        price: parseFloat(price),
+        discount_percentage: parseFloat(document.getElementById("addDiscount").value || 0),
+        stock: parseInt(document.getElementById("addStock").value || 0),
+        rating: parseFloat(document.getElementById("addRating").value || 0),
+        brand: document.getElementById("addBrand").value.trim()
+    };
+
+    fetch(`http://localhost:5000/product`, {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(newProduct)
+    })
+    .then(res => res.json())
+    .then(data => {
+        showSnackbar("Product added!", "success");
+        addModal.style.display="none";
+        fetchProducts(currentPage);
+        clearAddForm();
+    });
+
+});
+
 
   fetch(`http://localhost:5000/product`, {
-      method:"POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(newProduct)
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(newProduct)
   })
-  .then(res=>res.json())
-  .then(data=>{
-      showSnackbar("Product added!");
+  .then(res => res.json())
+  .then(data => {
+      showSnackbar("Product added!", "success");  // ONLY SUCCESS USES SNACKBAR
       addModal.style.display="none";
       fetchProducts(currentPage);
 
       // clear inputs
-      ["addTitle","addDescription","addCategory","addPrice","addDiscount","addStock","addRating","addBrand"]
+      ["addId","addTitle","addDescription","addCategory","addPrice","addDiscount","addStock","addRating","addBrand"]
         .forEach(id=>document.getElementById(id).value="");
   });
 };
+
+function clearAddForm() {
+  document.getElementById("addId").value = "";
+  document.getElementById("addTitle").value = "";
+  document.getElementById("addDescription").value = "";
+  document.getElementById("addCategory").value = "";
+  document.getElementById("addPrice").value = "";
+  document.getElementById("addDiscount").value = "";
+  document.getElementById("addStock").value = "";
+  document.getElementById("addRating").value = "";
+  document.getElementById("addBrand").value = "";
+
+  // clear inline error messages
+  document.getElementById("errAddId").innerText = "";
+  document.getElementById("errAddTitle").innerText = "";
+  document.getElementById("errAddCategory").innerText = "";
+  document.getElementById("errAddPrice").innerText = "";
+}
+
+
+function deleteProduct(id) {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+
+    
+    const payload = { id }; 
+
+    fetch("http://localhost:5000/product/delete", {
+        method: "POST",         
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.message.includes("Product deleted")) {
+            showSnackbar("Product deleted!", "success");
+            fetchProducts(currentPage); // refresh product list
+        } else {
+            showSnackbar("Delete failed: " + data.message, "error");
+        }
+    })
+    .catch(err => {
+        showSnackbar("Error deleting product", "error");
+        console.error(err);
+    });
+}
 
 
 fetchProducts();
 </script>
 </body>
 </html>
+
+
+ 

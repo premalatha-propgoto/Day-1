@@ -4,7 +4,8 @@
 <title>Product Details</title>
 
 <style>
-body { font-family: Arial; padding: 20px; }
+body { font-family: Arial; 
+  padding: 20px; }
 img { width: 300px; }
 
 .review {
@@ -101,7 +102,7 @@ function storeView(productId, title) {
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({
       product_id: productId,
-      product_name: title
+      product_name:title
     })
   });
 }
@@ -129,7 +130,7 @@ function loadProduct(id) {
             font-size:22px;
             color:red;
           ">
-          🗑️
+          
         </span>
 
         <!-- 🔥 Dummy Image for all products -->
