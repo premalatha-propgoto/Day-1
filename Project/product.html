@@ -4,8 +4,7 @@
 <title>Product Details</title>
 
 <style>
-body { font-family: Arial; 
-  padding: 20px; }
+body { font-family: Arial; padding: 20px; }
 img { width: 300px; }
 
 .review {
@@ -22,43 +21,11 @@ img { width: 300px; }
   background: white;
   padding: 10px;
 }
-
-#snackbar {
-  visibility: hidden;
-  min-width: 250px;
-  background-color: #333;
-  color: #fff;
-  padding: 14px 18px;
-  border-radius: 6px;
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  font-size: 16px;
-  z-index: 9999;
-  opacity: 0;
-  transform: translateY(-20px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
-}
-
-#snackbar.show {
-  visibility: visible;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-#snackbar.success {
-  background-color: #4caf50;
-}
-
-#snackbar.error {
-  background-color: #e53935;
-}
-
 </style>
 </head>
 
 <body>
-<div id="snackbar"></div>
+
 <div class="header">
   <h2>Product Details</h2>
 </div>
@@ -68,33 +35,19 @@ img { width: 300px; }
 <div id="productDetails">Loading...</div>
 
 <script>
-  function showSnackbar(message, type = "success") {
-  const sb = document.getElementById("snackbar");
-  sb.innerText = message;
-  sb.className = `show ${type}`;
-
-  setTimeout(() => {
-    sb.className = sb.className.replace("show", "");
-  }, 3000);
-}
-
 function deleteProduct(id) {
+  if (!confirm("Are you sure you want to delete this product?")) return;
+
   fetch(`http://localhost:5000/product/${id}`, {
     method: "DELETE"
   })
   .then(res => res.json())
   .then(data => {
-    showSnackbar("Product deleted successfully!", "success");
-
-    setTimeout(() => {
-      window.location.href = "index.html";
-    }, 1000);
+    alert("Product deleted successfully");
+    window.location.href = "index.html"; 
   })
-  .catch(err => {
-    showSnackbar("Failed to delete product!", "error");
-  });
+  .catch(err => console.error(err));
 }
-
 
 function storeView(productId, title) {
   fetch("http://localhost:5000/view", {
@@ -102,7 +55,7 @@ function storeView(productId, title) {
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({
       product_id: productId,
-      product_name:title
+      product_name: title
     })
   });
 }
@@ -130,7 +83,7 @@ function loadProduct(id) {
             font-size:22px;
             color:red;
           ">
-          
+          🗑️
         </span>
 
         <!-- 🔥 Dummy Image for all products -->
