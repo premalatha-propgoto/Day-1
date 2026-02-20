@@ -12,7 +12,7 @@ const pool = new Pool({
   host: "localhost",
   database: "product_db",
   password: "Prema",
-  port: 5432
+  port: 5432,
 });
 
 app.get("/", (req, res) => {
@@ -21,7 +21,16 @@ app.get("/", (req, res) => {
 
 /* ------------------ CREATE PRODUCT ------------------ */
 app.post("/product", async (req, res) => {
-  const { title, description, category, price, discount_percentage, rating, stock, brand } = req.body;
+  const {
+    title,
+    description,
+    category,
+    price,
+    discount_percentage,
+    rating,
+    stock,
+    brand,
+  } = req.body;
 
   try {
     const result = await pool.query(
@@ -29,7 +38,16 @@ app.post("/product", async (req, res) => {
        (title, description, category, price, discount_percentage, rating, stock, brand, is_active)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
        RETURNING id`,
-      [title, description, category, price || 0, discount_percentage || 0, rating || 0, stock || 0, brand || ""]
+      [
+        title,
+        description,
+        category,
+        price || 0,
+        discount_percentage || 0,
+        rating || 0,
+        stock || 0,
+        brand || "",
+      ],
     );
 
     const insertedId = result.rows[0].id;
@@ -45,11 +63,12 @@ app.get("/get_products/:id", async (req, res) => {
   try {
     const result = await pool.query(
       "SELECT * FROM products WHERE id=$1 AND is_active=true",
-      [req.params.id]
+      [req.params.id],
     );
-    if(result.rows.length === 0) return res.status(404).json({ message: "Product not found" });
+    if (result.rows.length === 0)
+      return res.status(404).json({ message: "Product not found" });
     res.json(result.rows[0]);
-  } catch(err) {
+  } catch (err) {
     res.status(500).send("Server error");
   }
 });
@@ -68,14 +87,14 @@ app.get("/get_products", async (req, res) => {
     const params = [];
     let idx = 1;
 
-    if(keyword) {
+    if (keyword) {
       baseQuery += ` AND (LOWER(title) LIKE LOWER($${idx}) OR LOWER(category) LIKE LOWER($${idx}) OR CAST(price AS TEXT) LIKE $${idx})`;
       countQuery += ` AND (LOWER(title) LIKE LOWER($${idx}) OR LOWER(category) LIKE LOWER($${idx}) OR CAST(price AS TEXT) LIKE $${idx})`;
       params.push(`%${keyword}%`);
       idx++;
     }
 
-    if(category !== "all") {
+    if (category !== "all") {
       baseQuery += ` AND category=$${idx}`;
       countQuery += ` AND category=$${idx}`;
       params.push(category);
@@ -83,7 +102,7 @@ app.get("/get_products", async (req, res) => {
     }
 
     // Add LIMIT and OFFSET for pagination
-    baseQuery += ` ORDER BY id LIMIT $${idx} OFFSET $${idx+1}`;
+    baseQuery += ` ORDER BY id LIMIT $${idx} OFFSET $${idx + 1}`;
     params.push(limit, offset);
 
     const data = await pool.query(baseQuery, params);
@@ -93,7 +112,7 @@ app.get("/get_products", async (req, res) => {
     const totalPages = Math.ceil(totalRows / limit);
 
     res.json({ page, limit, totalPages, totalRows, data: data.rows });
-  } catch(err) {
+  } catch (err) {
     console.error(err);
     res.status(500).send("Pagination error");
   }
@@ -102,21 +121,24 @@ app.get("/get_products", async (req, res) => {
 app.post("/search", async (req, res) => {
   const { product_id, keyword, category } = req.body;
   try {
-    if(keyword && keyword.trim() !== "") {
-      await pool.query(`INSERT INTO search_history(product_id, search_keyword) VALUES ($1,$2)`, [product_id, keyword]);
+    if (keyword && keyword.trim() !== "") {
+      await pool.query(
+        `INSERT INTO search_history(product_id, search_keyword) VALUES ($1,$2)`,
+        [product_id, keyword],
+      );
     }
 
     let query = `SELECT * FROM products WHERE is_active=true`;
     const params = [];
     let idx = 1;
 
-    if(keyword && keyword.trim() !== "") {
+    if (keyword && keyword.trim() !== "") {
       query += ` AND (LOWER(title) LIKE LOWER($${idx}) OR LOWER(category) LIKE LOWER($${idx}) OR CAST(price AS TEXT) LIKE $${idx})`;
       params.push(`%${keyword}%`);
       idx++;
     }
 
-    if(category && category !== "all") {
+    if (category && category !== "all") {
       query += ` AND category=$${idx}`;
       params.push(category);
       idx++;
@@ -126,7 +148,7 @@ app.post("/search", async (req, res) => {
 
     const result = await pool.query(query, params);
     res.json({ data: result.rows });
-  } catch(err) {
+  } catch (err) {
     console.error(err);
     res.status(500).send("Search error");
   }
@@ -136,26 +158,40 @@ app.post("/search", async (req, res) => {
 app.post("/view", async (req, res) => {
   const { product_id, product_name } = req.body;
   try {
-    await pool.query(`INSERT INTO product_views(product_id, product_name) VALUES ($1,$2)`, [product_id, product_name||""]);
+    await pool.query(
+      `INSERT INTO product_views(product_id, product_name) VALUES ($1,$2)`,
+      [product_id, product_name || ""],
+    );
     res.json({ message: "View stored" });
-  } catch(err) {
+  } catch (err) {
     res.status(500).send("View error");
   }
 });
 
 /* ------------------ DELETE PRODUCT ------------------ */
-app.delete("/product/:id", async (req,res) => {
+app.delete("/product/:id", async (req, res) => {
   try {
-    await pool.query("UPDATE products SET is_active=false WHERE id=$1", [req.params.id]);
+    await pool.query("UPDATE products SET is_active=false WHERE id=$1", [
+      req.params.id,
+    ]);
     res.json({ message: "Product deleted" });
-  } catch(err) {
+  } catch (err) {
     res.status(500).send("Delete error");
   }
 });
 
 /* ------------------ EDIT / UPDATE PRODUCT ------------------ */
 app.post("/product/:id", async (req, res) => {
-  const { title, description, category, price, discount_percentage, rating, stock, brand } = req.body;
+  const {
+    title,
+    description,
+    category,
+    price,
+    discount_percentage,
+    rating,
+    stock,
+    brand,
+  } = req.body;
   const id = req.params.id;
 
   try {
@@ -171,19 +207,28 @@ app.post("/product/:id", async (req, res) => {
            stock=$7,
            brand=$8
        WHERE id=$9 AND is_active=true`,
-      [title, description, category, price, discount_percentage, rating, stock, brand, id]
+      [
+        title,
+        description,
+        category,
+        price,
+        discount_percentage,
+        rating,
+        stock,
+        brand,
+        id,
+      ],
     );
 
-    if(result.rowCount === 0){
+    if (result.rowCount === 0) {
       return res.status(404).json({ message: "Product not found or inactive" });
     }
 
     res.json({ message: "Product updated successfully" });
-  } catch(err) {
+  } catch (err) {
     console.error(err);
     res.status(500).send("Update error");
   }
 });
-
 
 app.listen(5000, () => console.log("Server running on port 5000"));
